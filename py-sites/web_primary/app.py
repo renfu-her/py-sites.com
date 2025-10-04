@@ -17,9 +17,7 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    with engine.connect() as conn:
-        current_db = conn.execute(text("SELECT DATABASE()")).scalar()
-    return f"Hello from web_primary! Connected DB = {current_db}"
+    return "Hello from web_primary!"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
