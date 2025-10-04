@@ -14,7 +14,7 @@ def create_app():
         # Demo: 讀 DB 現在時間
         with engine.connect() as conn:
             now = conn.execute(text("SELECT NOW()")).scalar()
-        return f"py-sites.com OK. DB NOW: {now}"
+        return f"web-primary.py-sites.com OK. DB NOW: {now}"
 
     return app
 
