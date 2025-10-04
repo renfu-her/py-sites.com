@@ -6,4 +6,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends build-essential
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-CMD ["gunicorn", "-b", "0.0.0.0:8000", "app:app", "--workers=2", "--threads=4", "--timeout=60"]
+CMD ["gunicorn", "-b", "0.0.0.0:8001", "app:app", "--workers=2", "--threads=4", "--timeout=60"]
