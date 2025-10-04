@@ -1,0 +1,101 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # Entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      # ACME (Let's Encrypt) via Cloudflare DNS-01
+      - "--certificatesresolvers.cf.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.cf.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.cf.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cf.acme.dnschallenge.delaybeforecheck=0"
+    environment:
+      - CF_DNS_API_TOKEN=${CF_DNS_API_TOKEN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/acme.json:/letsencrypt/acme.json"
+    labels:
+      - "traefik.enable=true"
+      # 共用安全標頭與壓縮中介層
+      - "traefik.http.middlewares.sec.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.sec.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.sec.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.sec.headers.stsPreload=true"
+      - "traefik.http.middlewares.sec.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.sec.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.sec.headers.frameDeny=true"
+      - "traefik.http.middlewares.compress.compress=true"
+    networks:
+      - web
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - dbdata:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - internal
+    restart: unless-stopped
+
+  shop:
+    build: ./shop
+    env_file: .env
+    environment:
+      - FLASK_ENV=production
+      - DB_DATABASE=shop_db
+    depends_on:
+      - mariadb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shop.rule=Host(`shop.py-sites.com`)"
+      - "traefik.http.routers.shop.entrypoints=websecure"
+      - "traefik.http.routers.shop.tls.certresolver=cf"
+      - "traefik.http.services.shop.loadbalancer.server.port=8000"
+      - "traefik.http.routers.shop.middlewares=sec@docker,compress@docker"
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+
+  web_primary:
+    build: ./web_primary
+    env_file: .env
+    environment:
+      - FLASK_ENV=production
+      - DB_DATABASE=web_primary_db
+    depends_on:
+      - mariadb
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webprimary.rule=Host(`web-primary.py-sites.com`)"
+      - "traefik.http.routers.webprimary.entrypoints=websecure"
+      - "traefik.http.routers.webprimary.tls.certresolver=cf"
+      - "traefik.http.services.webprimary.loadbalancer.server.port=8000"
+      - "traefik.http.routers.webprimary.middlewares=sec@docker,compress@docker"
+    networks:
+      - web
+      - internal
+    restart: unless-stopped
+
+volumes:
+  dbdata:
+
+networks:
+  web:
+  internal:
+    internal: true
