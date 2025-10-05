@@ -34,7 +34,8 @@ services:
     expose:
       - "8000"
     networks:
-      - internal
+      internal:
+        aliases: [main]
     restart: unless-stopped
     command: ["gunicorn","-b","0.0.0.0:8000","-w","2","wsgi:app"]
 
@@ -72,7 +73,8 @@ services:
       - ./mariadb/data:/var/lib/mysql
       - ./mariadb/init:/docker-entrypoint-initdb.d:ro
     networks:
-      - internal
+      internal:
+        aliases: [mariadb]
     restart: unless-stopped
 
 networks:
