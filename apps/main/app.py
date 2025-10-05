@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
 
-db_user = os.getenv("DB_USER", "pyapp")
+db_user = os.getenv("DB_USER", "py-app")
 db_pass = quote_plus(os.getenv("DB_PASSWORD", ""))  # 密碼安全編碼
 db_host = os.getenv("DB_HOST", "mariadb")
 db_port = os.getenv("DB_PORT", "3306")
