@@ -7,3 +7,4 @@ keepalive = 5
 accesslog = "-"
 errorlog = "-"
 loglevel = "info"
+umask = 0o007
