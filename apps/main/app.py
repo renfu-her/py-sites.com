@@ -51,7 +51,7 @@ def healthz():
 
 @app.get("/dbinfo")
 def dbinfo():
-     # 回傳目前 DB 設定 + 連線測試（省略細節）
+    # 回傳目前 DB 設定 + 連線測試（省略細節）
     return {"ok": True, "endpoint": "dbinfo"}
 
 @app.get("/")
