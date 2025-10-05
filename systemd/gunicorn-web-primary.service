@@ -1,0 +1,17 @@
+[Unit]
+Description=Gunicorn for web-primary.py-sites.com
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/$(whoami)/htdocs/py-sites/apps/web_primary
+Environment="PATH=/home/$(whoami)/htdocs/py-sites/envs/py-sites-venv/bin"
+ExecStart=/home/$(whoami)/htdocs/py-sites/envs/py-sites-venv/bin/gunicorn \
+  --workers 2 --bind unix:/run/gunicorn-web-primary.sock --access-logfile - --error-logfile - wsgi:app
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
