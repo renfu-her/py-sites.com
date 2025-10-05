@@ -9,7 +9,7 @@ def create_app():
     db_pass = os.getenv("DB_PASSWORD", "")
     db_host = os.getenv("DB_HOST", "mariadb")
     db_port = os.getenv("DB_PORT", "3306")
-    db_name = os.getenv("DB_NAME", "main_db")
+    db_name = os.getenv("DB_NAME", "web_primary_db")
 
     app.config["DB_URL"] = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
 
