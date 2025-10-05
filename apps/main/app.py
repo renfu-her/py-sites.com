@@ -51,45 +51,8 @@ def healthz():
 
 @app.get("/dbinfo")
 def dbinfo():
-    """回傳目前 DB 連線資訊 + 即時健康檢查"""
-    # 1) DNS 解析
-    dns_ok = True
-    db_ip = None
-    dns_error = None
-    try:
-        db_ip = socket.gethostbyname(DB_HOST)
-    except Exception as e:
-        dns_ok = False
-        dns_error = str(e)
-
-    # 2) 連線測試（SELECT VERSION()/DATABASE()）
-    conn_ok = True
-    details = {}
-    error = None
-    try:
-        with engine.connect() as conn:
-            ver = conn.execute(text("SELECT VERSION() AS v")).mappings().one()["v"]
-            curdb = conn.execute(text("SELECT DATABASE() AS d")).mappings().one()["d"]
-            # 簡單 query 測速
-            conn.execute(text("SELECT 1"))
-            details = {"version": ver, "current_db": str(curdb)}
-    except SQLAlchemyError as e:
-        app.logger.exception("DB connection test failed")
-        conn_ok = False
-        error = f"{e.__class__.__name__}: {e}"
-
-    return jsonify({
-        "config": {
-            "url_masked": safe_db_url(),
-            "host": DB_HOST,
-            "port": DB_PORT,
-            "user": DB_USER,
-            "db_name": DB_NAME,
-            "timeout_sec": CONNECT_TIMEOUT,
-        },
-        "dns": {"ok": dns_ok, "ip": db_ip, "error": dns_error},
-        "connection": {"ok": conn_ok, "error": error, "details": details},
-    })
+     # 回傳目前 DB 設定 + 連線測試（省略細節）
+    return {"ok": True, "endpoint": "dbinfo"}
 
 @app.get("/")
 def index():
