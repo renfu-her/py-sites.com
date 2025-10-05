@@ -1,35 +1,21 @@
+# app.py  ─ 最小可用 Flask，不連 DB
 import os
-from flask import Flask
-from sqlalchemy import create_engine, text
+from flask import Flask, jsonify
 
-def create_app():
-    app = Flask(__name__)
+app = Flask(__name__)
 
-    db_user = os.getenv("DB_USER", "pyapp")
-    db_pass = os.getenv("DB_PASSWORD", "")
-    db_host = os.getenv("DB_HOST", "mariadb")
-    db_port = os.getenv("DB_PORT", "3306")
-    db_name = os.getenv("DB_NAME", "main_db")
+@app.get("/healthz")
+def healthz():
+    # 給反向代理 / Cloudflare 用，不動任何外部資源
+    return {"ok": True}
 
-    app.config["DB_URL"] = f"mysql+pymysql://{db_user}:{db_pass}@{db_host}:{db_port}/{db_name}"
+@app.get("/")
+def index():
+    # 回一些環境資訊，方便你辨識是哪個服務
+    return jsonify({
+        "ok": True,
+        "service": os.getenv("APP_NAME", os.getenv("DB_NAME", "app")),  # 可用 APP_NAME 或沿用 DB_NAME 當識別
+        "hostname": os.getenv("HOSTNAME", "flask-app"),
+        "db_enabled": False
+    })
 
-    engine = create_engine(app.config["DB_URL"], pool_pre_ping=True)
-
-    @app.get("/")
-    def hello():
-        with engine.connect() as conn:
-            conn.execute(text("CREATE TABLE IF NOT EXISTS healthz (id INT PRIMARY KEY AUTO_INCREMENT, at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"))
-            r = conn.execute(text("SELECT NOW() as now")).mappings().one()
-        return {
-            "app": os.getenv("HOSTNAME", "flask-app"),
-            "db": db_name,
-            "now": str(r["now"])
-        }
-
-    @app.get("/healthz")
-    def healthz():
-        return {"ok": True}
-
-    return app
-
-app = create_app()
