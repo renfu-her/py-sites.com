@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}後台管理登錄 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header text-center bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-cog"></i> 後台管理登錄
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">管理員郵箱</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="admin@admin.com" required readonly>
+                        <div class="form-text">固定管理員郵箱</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密碼</label>
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="請輸入管理員密碼" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> 登錄後台
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        默認密碼: <code>admin123</code>
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 返回前台 -->
+        <div class="text-center mt-3">
+            <a href="{{ url_for('frontend.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回前台
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

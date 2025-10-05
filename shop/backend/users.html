@@ -1,0 +1,121 @@
+﻿{% extends "base.html" %}
+
+{% block title %}用戶管理 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <h1 class="mb-0">用戶管理</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('backend.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <a href="{{ url_for('backend.create_user') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> 新增用戶
+                </a>
+            </div>
+        </div>
+
+        {% if users %}
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>姓名</th>
+                                <th>電子信箱</th>
+                                <th>電話</th>
+                                <th>角色</th>
+                                <th>狀態</th>
+                                <th>註冊時間</th>
+                                <th class="text-end">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>
+                                    {{ user.name }}
+                                    {% if user.is_admin %}
+                                    <i class="fas fa-crown text-warning ms-1" title="管理員"></i>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.email }}</td>
+                                <td>{{ user.phone or '-' }}</td>
+                                <td>
+                                    {% if user.is_admin %}
+                                    <span class="badge bg-danger">管理員</span>
+                                    {% else %}
+                                    <span class="badge bg-info">一般用戶</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                    <span class="badge bg-success">啟用</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">停用</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+                                        <button class="btn btn-sm btn-outline-warning"
+                                                onclick="toggleUserStatus({{ user.id }}, {{ user.is_active|lower }})">
+                                            {{ '停用' if user.is_active else '啟用' }}
+                                        </button>
+                                        {% if user.id != current_user.id and not user.is_admin %}
+                                        <form method="POST" action="{{ url_for('backend.delete_user', user_id=user.id) }}" class="d-inline" onsubmit="return confirm('確定要刪除這個用戶嗎？');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">刪除</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">暫無用戶</h3>
+            <p class="text-muted">尚未有用戶註冊。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleUserStatus(userId, isActive) {
+    const action = isActive ? '停用' : '啟用';
+    if (confirm(`確定要${action}這個用戶嗎？`)) {
+        fetch('/api/admin/users/' + userId + '/toggle-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('操作失敗: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失敗，請稍後再試');
+        });
+    }
+}
+</script>
+{% endblock %}

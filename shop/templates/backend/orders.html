@@ -1,0 +1,76 @@
+﻿{% extends "base.html" %}
+
+{% block title %}訂單管理 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <h1 class="mb-0">訂單管理</h1>
+            <a href="{{ url_for('backend.dashboard') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回
+            </a>
+        </div>
+        
+        {% if orders %}
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>訂單號</th>
+                                <th>客戶</th>
+                                <th>金額</th>
+                                <th>狀態</th>
+                                <th>建立時間</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.customer_name }}</td>
+                                <td>NTD{{ "%.0f"|format(order.total_amount) }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'pending' %}bg-warning
+                                        {% elif order.status == 'confirmed' %}bg-info
+                                        {% elif order.status == 'preparing' %}bg-primary
+                                        {% elif order.status == 'ready' %}bg-success
+                                        {% elif order.status == 'completed' %}bg-success
+                                        {% elif order.status == 'cancelled' %}bg-danger
+                                        {% endif %}">
+                                        {% if order.status == 'pending' %}待確認
+                                        {% elif order.status == 'confirmed' %}已確認
+                                        {% elif order.status == 'preparing' %}製作中
+                                        {% elif order.status == 'ready' %}待取餐
+                                        {% elif order.status == 'completed' %}已完成
+                                        {% elif order.status == 'cancelled' %}已取消
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                <td>
+                                    <a href="{{ url_for('backend.order_detail', order_id=order.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">查看詳情</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">暫無訂單</h3>
+            <p class="text-muted">尚未有任何訂單。</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

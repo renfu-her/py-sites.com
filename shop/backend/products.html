@@ -1,0 +1,137 @@
+﻿{% extends "base.html" %}
+
+{% block title %}商品管理 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <h1 class="mb-0">商品管理</h1>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('backend.dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回
+                </a>
+                <a href="{{ url_for('backend.create_product') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> 新增商品
+                </a>
+            </div>
+        </div>
+        
+        {% if products %}
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>圖片</th>
+                                <th>名稱</th>
+                                <th>價格</th>
+                                <th>特價</th>
+                                <th>狀態</th>
+                                <th>建立日期</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.id }}</td>
+                                <td>
+                                    {% set active_images = product.images | selectattr('is_active') | list %}
+                                    {% if active_images %}
+                                    <img src="/static/uploads/{{ active_images[0].image }}" 
+                                         alt="{{ product.name }}" 
+                                         class="rounded" 
+                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.name }}</td>
+                                <td>NTD{{ "%.0f"|format(product.price) }}</td>
+                                <td>
+                                    {% if product.special_price > 0 %}
+                                    NTD{{ "%.0f"|format(product.special_price) }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.is_active %}
+                                    <span class="badge bg-success">啟用</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">停用</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ product.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('frontend.product_detail', product_id=product.id) }}" 
+                                           class="btn btn-outline-info" title="查看">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('backend.edit_product', product_id=product.id) }}" 
+                                           class="btn btn-outline-primary" title="編輯">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="toggleProductStatus({{ product.id }}, {{ product.is_active|lower }})" 
+                                                title="{{ '停用' if product.is_active else '啟用' }}">
+                                            <i class="fas fa-{{ 'ban' if product.is_active else 'check' }}"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-box fa-5x text-muted mb-4"></i>
+            <h3 class="text-muted">暫無商品</h3>
+            <p class="text-muted mb-4">尚未有任何商品。</p>
+            <a href="{{ url_for('backend.create_product') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> 立即新增第一個商品
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleProductStatus(productId, isActive) {
+    const action = isActive ? '停用' : '啟用';
+    if (confirm(`確定要${action}這個商品嗎？`)) {
+        fetch('/api/admin/products/' + productId + '/toggle-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('操作失敗: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('操作失敗，請稍後再試');
+        });
+    }
+}
+</script>
+{% endblock %}

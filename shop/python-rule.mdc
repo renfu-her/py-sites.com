@@ -1,0 +1,425 @@
+---
+alwaysApply: true
+---
+# Flask MVC 與 ECharts 專案規範（Markdown 版） v1.0
+
+> 適用對象：以 Flask 3.x（Python 3.11+）開發的 Web 專案，前端以 ECharts 呈現資料視覺化。本文定義 架構、程式風格、資料契約、測試、部署 與 圖表規範。可直接納入 repo 的 docs/。
+> 
+
+---
+
+## 目錄
+
+- [共通原則](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E5%85%B1%E9%80%9A%E5%8E%9F%E5%89%87)
+- [專案結構（MVC+Service+Repository）](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E5%B0%88%E6%A1%88%E7%B5%90%E6%A7%8Bmvcservicerepository)
+- [Flask 程式規範](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#flask-%E7%A8%8B%E5%BC%8F%E8%A6%8F%E7%AF%84)
+    - [應用啟動與設定](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E6%87%89%E7%94%A8%E5%95%9F%E5%8B%95%E8%88%87%E8%A8%AD%E5%AE%9A)
+    - [Blueprint（Controller 層）](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#blueprintcontroller-%E5%B1%A4)
+    - [Service 與 Repository](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#service-%E8%88%87-repository)
+    - [資料模型與 Schema](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E8%B3%87%E6%96%99%E6%A8%A1%E5%9E%8B%E8%88%87-schema)
+    - [錯誤處理與回應格式](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E9%8C%AF%E8%AA%A4%E8%99%95%E7%90%86%E8%88%87%E5%9B%9E%E6%87%89%E6%A0%BC%E5%BC%8F)
+    - [驗證與授權](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E9%A9%97%E8%AD%89%E8%88%87%E6%8E%88%E6%AC%8A)
+    - [日誌與觀測性](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E6%97%A5%E8%AA%8C%E8%88%87%E8%A7%80%E6%B8%AC%E6%80%A7)
+    - [任務、排程與事件](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E4%BB%BB%E5%8B%99%E6%8E%92%E7%A8%8B%E8%88%87%E4%BA%8B%E4%BB%B6)
+    - [測試與品質門檻](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E6%B8%AC%E8%A9%A6%E8%88%87%E5%93%81%E8%B3%AA%E9%96%80%E6%AA%BB)
+    - [效能與安全](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E6%95%88%E8%83%BD%E8%88%87%E5%AE%89%E5%85%A8)
+    - [部署指南](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E9%83%A8%E7%BD%B2%E6%8C%87%E5%8D%97)
+- [ECharts 規範](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#echarts-%E8%A6%8F%E7%AF%84)
+    - [前端與圖表檔案組織](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E5%89%8D%E7%AB%AF%E8%88%87%E5%9C%96%E8%A1%A8%E6%AA%94%E6%A1%88%E7%B5%84%E7%B9%94)
+    - [資料契約（後端→前端）](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E8%B3%87%E6%96%99%E5%A5%91%E7%B4%84%E5%BE%8C%E7%AB%AF%E5%89%8D%E7%AB%AF)
+    - [Option 工廠與共用樣式](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#option-%E5%B7%A5%E5%BB%A0%E8%88%87%E5%85%B1%E7%94%A8%E6%A8%A3%E5%BC%8F)
+    - [互動、可用性與無障礙](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E4%BA%92%E5%8B%95%E5%8F%AF%E7%94%A8%E6%80%A7%E8%88%87%E7%84%A1%E9%9A%9C%E7%A4%99)
+    - [效能規範](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E6%95%88%E8%83%BD%E8%A6%8F%E7%AF%84)
+    - [常見圖表樣板](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E5%B8%B8%E8%A6%8B%E5%9C%96%E8%A1%A8%E6%A8%A3%E6%9D%BF)
+- [工具設定樣板](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#%E5%B7%A5%E5%85%B7%E8%A8%AD%E5%AE%9A%E6%A8%A3%E6%9D%BF)
+- [PR 檢核清單](https://chatgpt.com/c/68da0398-faf4-832b-a7b9-6151b1b01ff3#pr-%E6%AA%A2%E6%A0%B8%E6%B8%85%E5%96%AE)
+
+---
+
+## 共通原則
+
+1. **一致性優先**：以自動化工具落地（pre-commit、CI），減少人工作弊。
+2. **分層清晰**：Controller 薄、Service 厚；資料存取隔離在 Repository。
+3. **型別與文件**：公開函式與資料結構必備型別註記與 docstring。
+4. **可測可觀測**：關鍵流程有測試與可追蹤 log（含 trace_id）。
+5. **前後端契約優先**：以 Schema 驗證輸入/輸出，避免魔術字串。
+
+---
+
+## 專案結構（MVC+Service+Repository）
+
+```
+app/
+├─ __init__.py              # create_app(), 擴充初始化（db, cache, cors, apispec...）
+├─ config.py                # Config, DevConfig, ProdConfig
+├─ ext/                     # 第三方擴充初始化：db, migrate, cache, jwt, cors, limiter
+├─ blueprints/              # Controller（HTTP 邊界）
+│  ├─ __init__.py
+│  ├─ health/               # /health
+│  │  └─ routes.py
+│  └─ charts/               # /api/charts/*
+│     └─ routes.py
+├─ services/                # 商業邏輯（Pure Python）
+│  ├─ __init__.py
+│  └─ chart_service.py
+├─ repositories/            # 資料存取（DB/外部 API）
+│  ├─ __init__.py
+│  └─ order_repo.py
+├─ models/                  # ORM 模型（SQLAlchemy）
+│  └─ order.py
+├─ schemas/                 # 輸入/輸出 Schema（pydantic 或 marshmallow）
+│  └─ chart.py
+├─ utils/                   # 共用工具、formatters、ids、exceptions
+├─ tasks/                   # 背景任務（Celery/RQ/APScheduler）
+└─ wsgi.py                  # 部署入口（Gunicorn）
+
+migrations/                 # Alembic 遷移
+scripts/                    # 管理腳本（seed, repair, export）
+tests/                      # pytest（單元/整合/契約）
+pyproject.toml              # ruff/black/isort/mypy 設定
+.env.example                # 環境變數樣板
+README.md
+
+```
+
+---
+
+## Flask 程式規範
+
+### 應用啟動與設定
+
+- **應用工廠**：使用 `create_app(config_name: str | None)`；禁止在 import 階段做 I/O。
+- **設定分層**：`BaseConfig`、`DevConfig`、`TestConfig`、`ProdConfig`；敏感值用環境變數，提供 `.env.example`。
+- **擴充初始化**集中於 `ext/`，避免循環依賴。
+
+**範例：`app/__init__.py`**
+
+```python
+from __future__ import annotations
+from flask import Flask
+from .config import DevConfig
+from .ext.db import db, migrate
+from .ext.cache import cache
+from .blueprints.health import bp as health_bp
+from .blueprints.charts import bp as charts_bp
+
+def create_app(config_object: type | None = DevConfig) -> Flask:
+    app = Flask(__name__)
+    app.config.from_object(config_object)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+    cache.init_app(app)
+
+    app.register_blueprint(health_bp, url_prefix="/health")
+    app.register_blueprint(charts_bp, url_prefix="/api/charts")
+
+    return app
+
+```
+
+### Blueprint（Controller 層）
+
+- Controller **不含商業邏輯**，只負責：解析輸入 → 調用 Service → 序列化輸出。
+- 輸入/輸出以 **Schema** 驗證（pydantic / marshmallow），失敗回傳 400。
+
+**範例：`app/blueprints/charts/routes.py`**
+
+```python
+from flask import Blueprint, request
+from http import HTTPStatus
+from app.schemas.chart import ChartQuery, LineChartResp
+from app.services.chart_service import ChartService
+
+bp = Blueprint("charts", __name__)
+
+@bp.get("/sales-line")
+def sales_line():
+    q = ChartQuery.model_validate(request.args)
+    data = ChartService().sales_line(start=q.start, end=q.end, store_id=q.store_id)
+    return LineChartResp(status="ok", data=data).model_dump(), HTTPStatus.OK
+
+```
+
+### Service 與 Repository
+
+- **Service**：可組合多個 Repository，處理商業規則、交易邏輯、異常轉譯。
+- **Repository**：唯一存取資料來源位置；不可漏出 ORM 細節到 Service 以上。
+
+**範例：`app/services/chart_service.py`**
+
+```python
+from datetime import date
+from app.repositories.order_repo import OrderRepo
+
+class ChartService:
+    def __init__(self, order_repo: OrderRepo | None = None):
+        self.order_repo = order_repo or OrderRepo()
+
+    def sales_line(self, start: date, end: date, store_id: int | None):
+        rows = self.order_repo.sum_by_day(start, end, store_id)
+        # 回傳前端契約格式：[{"x": "2025-09-01", "y": 12345.6}, ...]
+        return [{"x": r.day.isoformat(), "y": float(r.total)} for r in rows]
+
+```
+
+**範例：`app/repositories/order_repo.py`**
+
+```python
+from sqlalchemy import select, func
+from app.ext.db import db
+from app.models.order import Order
+
+class OrderRepo:
+    def sum_by_day(self, start, end, store_id=None):
+        stmt = (
+            select(func.date(Order.created_at).label("day"), func.sum(Order.amount).label("total"))
+            .where(Order.created_at.between(start, end))
+            .group_by(func.date(Order.created_at))
+            .order_by("day")
+        )
+        if store_id:
+            stmt = stmt.where(Order.store_id == store_id)
+        return db.session.execute(stmt).all()
+
+```
+
+### 資料模型與 Schema
+
+- ORM：SQLAlchemy 2.x；遷移：Alembic；欄位命名 `snake_case`；時間一律 UTC。
+- Schema：**pydantic v2**（建議）統一輸入/輸出格式；所有 API 回應必含 `status` 與 `data` 欄位。
+
+**範例：`app/schemas/chart.py`**
+
+```python
+from datetime import date
+from pydantic import BaseModel, Field
+
+class ChartQuery(BaseModel):
+    start: date
+    end: date
+    store_id: int | None = Field(default=None)
+
+class XYPoint(BaseModel):
+    x: str
+    y: float
+
+class LineChartResp(BaseModel):
+    status: str
+    data: list[XYPoint]
+
+```
+
+### 錯誤處理與回應格式
+
+- 全域錯誤處理器：將例外轉為 `{ "status": "error", "error": { "code": ..., "message": ... } }`。
+- 客製錯誤繼承 `AppError`，Controller 不做 except-all。
+
+**範例：全域 handler**
+
+```python
+from flask import jsonify
+from werkzeug.exceptions import HTTPException
+
+class AppError(Exception):
+    code = 400
+    message = "application error"
+
+def register_error_handlers(app):
+    @app.errorhandler(AppError)
+    def handle_app_error(e):
+        return jsonify({"status": "error", "error": {"code": e.code, "message": e.message}}), e.code
+
+    @app.errorhandler(Exception)
+    def handle_unexpected(e):
+        if isinstance(e, HTTPException):
+            return jsonify({"status": "error", "error": {"code": e.code, "message": e.description}}), e.code
+        return jsonify({"status": "error", "error": {"code": 500, "message": "internal server error"}}), 500
+
+```
+
+### 驗證與授權
+
+- 使用 **JWT**（`Authorization: Bearer <token>`）或 session；採角色/權限表達授權。
+- 涉及安全的端點需 **CSRF 防護**（表單）與 **速率限制**（`flask-limiter`）。
+
+### 日誌與觀測性
+
+- 標準化 JSON 日誌：`logging` 或 `structlog`；加入 `trace_id`、`user_id`、`method`、`path`。
+- 指標：匯出 Prometheus metrics（如使用 `prometheus_flask_exporter`）。
+
+### 任務、排程與事件
+
+- 背景任務：**Celery**（Redis/RabbitMQ）或 **RQ**；排程用 APScheduler 或外部 Crontab。
+- 任務函式必可重入、冪等；記錄執行結果與重試策略。
+
+### 測試與品質門檻
+
+- 測試：`pytest`；覆蓋率 **≥ 80%**；區分單元/整合/端點契約測試。
+- 測試資料庫使用獨立 schema；外部依賴以 mock/fake（`responses`/`pytest-httpx`）。
+
+### 效能與安全
+
+- N+1 以 `selectinload/joinedload` 解；長查詢加索引並審視 EXPLAIN。
+- 輸入皆經 Schema 驗證；輸出為 JSON，避免把 ORM 直接序列化。
+- 設定 `SECURE_*` header（`Flask-Talisman` 或反向代理層 Nginx）。
+
+### 部署指南
+
+- 建議：**Gunicorn + gevent/uvicorn workers**（若有 async view），前置 **Nginx** 反代。
+- 靜態檔以 CDN 或 Nginx 直送；啟用 GZip/Brotli。
+- 健康檢查：`/health` 回傳應用/DB/Cache 狀態。
+
+---
+
+## ECharts 規範
+
+### 前端與圖表檔案組織
+
+```
+frontend/
+├─ charts/
+│  ├─ themes/              # light/dark 主題
+│  ├─ options/             # option 工廠（工廠函式）
+│  ├─ datasets/            # 後端資料→前端結構轉換
+│  ├─ components/          # React/Vue 包裝元件（<EChart />）
+│  └─ utils/               # palette、formatters、tooltip
+└─ api/                    # 與 Flask 的 /api/* 資料契約
+
+```
+
+- 前端使用 **TypeScript**；ESLint + Prettier 強制一致。
+- 後端與前端用 **同名契約**（例如 `XYPoint`）。
+
+### 資料契約（後端→前端）
+
+- 線圖/長條圖通用：
+
+```tsx
+export interface XYPoint { x: string; y: number }
+export interface ChartResp { status: 'ok'; data: XYPoint[] }
+
+```
+
+- API 端點需回傳 `status` 與 `data`，錯誤回傳同一格式的 `error` 欄位。
+
+### Option 工廠與共用樣式
+
+- **禁止**在頁面中硬寫 option；統一用 `makeLineOption / makeBarOption` 等工廠。
+- 預設採 **dataset + encode**，不要直接丟 `series.data`（微型圖除外）。
+
+**範例：`charts/options/line.ts`**
+
+```tsx
+import * as echarts from 'echarts'
+import { XYPoint } from '../types'
+
+export function makeLineOption(rows: XYPoint[], title = ''): echarts.EChartsOption {
+  return {
+    title: { text: title },
+    dataset: { source: rows.map(d => [d.x, d.y]) },
+    xAxis: { type: 'category' },
+    yAxis: { type: 'value' },
+    grid: { containLabel: true },
+    tooltip: { trigger: 'axis' },
+    series: [{ type: 'line', encode: { x: 0, y: 1 }, smooth: true }],
+    aria: { enabled: true }
+  }
+}
+
+```
+
+- 語意化色盤集中：`utils/palette.ts`；主題在 `themes/*`，避免單點取色。
+- `formatter` 為純函式並加測試，例如 `formatCurrency(n: number): string`。
+
+### 互動、可用性與無障礙
+
+- `legend` 可控，提供「重置」操作。
+- `dataZoom`: 預設 inside + slider；大量資料開啟。
+- 無障礙：`aria.enabled = true`，`series.name` 與 `title.text` 不留空。
+
+### 效能規範
+
+- 資料量 > 50k：啟用 `progressive` 或使用 `echarts-gl`。
+- 視窗 resize 事件節流；元件卸載時 **必定** `dispose()`。
+
+### 常見圖表樣板
+
+- 折線（時間序列）：`time`/`category` x 軸，`tooltip.trigger='axis'`，`smooth=true`。
+- 長條（類別比較）：`barMaxWidth=36`，標籤過長旋轉 30°。
+- 散點（相關性）：`symbolSize` 隨第三維（可選）。
+
+---
+
+## 工具設定樣板
+
+**pyproject.toml**（節錄）
+
+```toml
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.ruff]
+line-length = 100
+select = ["E","F","I","B","UP","SIM","PL"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_configs = true
+
+```
+
+**.editorconfig**
+
+```
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+```
+
+**pre-commit 範例**
+
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks: [ { id: black } ]
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.6.9
+    hooks: [ { id: ruff } ]
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks: [ { id: isort } ]
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks: [ { id: prettier, additional_dependencies: ["prettier@^3"] } ]
+
+```
+
+---
+
+## PR 檢核清單
+
+- [ ]  Controller 僅做 I/O，商業邏輯位於 Service。
+- [ ]  輸入/輸出皆由 Schema 驗證，API 回應含 `status` 與 `data`/`error`。
+- [ ]  Repository 不外露 ORM 細節；查詢有索引且避免 N+1。
+- [ ]  單元/整合測試通過，覆蓋率 ≥ 80%。
+- [ ]  ECharts 以 `dataset + encode`；formatter 集中且具測試。
+- [ ]  chart 元件有 resize 節流與 dispose 清理；aria 啟用。
+- [ ]  CI pre-commit 全綠；CHANGELOG 與 README 已更新。
+
+---
+
+> 備註：若採用 async view（Flask 3+），請審視 DB driver 與任務框架是否支援 async，避免阻塞事件迴圈。
+>

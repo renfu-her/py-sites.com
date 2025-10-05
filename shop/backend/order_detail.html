@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}訂單詳情 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>訂單詳情: {{ order.order_number }}</h1>
+            <a href="{{ url_for('backend.orders') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回訂單列表
+            </a>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">訂單商品</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for item in order.order_items %}
+                        <div class="d-flex align-items-center py-3 border-bottom">
+                            <div class="flex-shrink-0 me-3">
+                                {% set active_images = item.product.images | selectattr('is_active') | list %}
+                                {% if active_images %}
+                                <img src="/static/uploads/{{ active_images[0].image }}" 
+                                     alt="{{ item.product.name }}" 
+                                     class="rounded" 
+                                     style="width: 80px; height: 80px; object-fit: cover;">
+                                {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="width: 80px; height: 80px;">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ item.product.name }}</h6>
+                                <p class="text-muted mb-1 small">
+                                    {% if item.temperature == 'cold' %}
+                                        冷飲
+                                    {% elif item.temperature == 'hot' %}
+                                        熱飲
+                                    {% else %}
+                                        常溫
+                                    {% endif %}
+                                    × {{ item.quantity }}
+                                </p>
+                                {% if item.ingredients %}
+                                <p class="text-muted mb-0 small">
+                                    配料: {{ item.ingredients | map(attribute='name') | join(', ') }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="flex-shrink-0">
+                                <span class="fw-bold">NTD{{ "%.0f"|format(item.line_total) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">訂單信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <strong>訂單狀態:</strong>
+                            <span class="badge 
+                                {% if order.status == 'pending' %}bg-warning
+                                {% elif order.status == 'confirmed' %}bg-info
+                                {% elif order.status == 'preparing' %}bg-primary
+                                {% elif order.status == 'ready' %}bg-success
+                                {% elif order.status == 'completed' %}bg-success
+                                {% elif order.status == 'cancelled' %}bg-danger
+                                {% endif %} ms-2">
+                                {% if order.status == 'pending' %}待確認
+                                {% elif order.status == 'confirmed' %}已確認
+                                {% elif order.status == 'preparing' %}製作中
+                                {% elif order.status == 'ready' %}待取餐
+                                {% elif order.status == 'completed' %}已完成
+                                {% elif order.status == 'cancelled' %}已取消
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>客戶信息:</strong><br>
+                            姓名: {{ order.customer_name }}<br>
+                            手機: {{ order.customer_phone }}<br>
+                            {% if order.customer_email %}
+                            郵箱: {{ order.customer_email }}<br>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>支付信息:</strong><br>
+                            支付方式: {{ order.payment_method or '未選擇' }}<br>
+                            支付狀態: {{ order.payment_status or '待支付' }}
+                        </div>
+                        
+                        {% if order.notes %}
+                        <div class="mb-3">
+                            <strong>備註:</strong><br>
+                            {{ order.notes or '' }}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <strong>總金額:</strong><br>
+                            <span class="h4 text-primary">NTD{{ "%.0f"|format(order.total_amount) }}</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <strong>時間:</strong><br>
+                            下單時間: {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}<br>
+                            更新時間: {{ order.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </div>
+                        
+                        <!-- 状态更新按钮 -->
+                        {% if order.status in ['pending', 'confirmed', 'preparing'] %}
+                        <div class="d-grid gap-2">
+                            {% if order.status == 'pending' %}
+                            <button class="btn btn-info" onclick="updateOrderStatus('{{ order.id }}', 'confirmed')">
+                                確認訂單
+                            </button>
+                            {% elif order.status == 'confirmed' %}
+                            <button class="btn btn-primary" onclick="updateOrderStatus('{{ order.id }}', 'preparing')">
+                                開始製作
+                            </button>
+                            {% elif order.status == 'preparing' %}
+                            <button class="btn btn-success" onclick="updateOrderStatus('{{ order.id }}', 'ready')">
+                                製作完成
+                            </button>
+                            {% endif %}
+                            
+                            <button class="btn btn-success" onclick="updateOrderStatus('{{ order.id }}', 'completed')">
+                                完成訂單
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateOrderStatus(orderId, newStatus) {
+    const statusNames = {
+        'confirmed': '確認訂單',
+        'preparing': '開始製作',
+        'ready': '製作完成',
+        'completed': '完成訂單'
+    };
+    
+    if (confirm(`確定要${statusNames[newStatus]}吗？`)) {
+        fetch('/api/admin/orders/' + orderId + '/status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('更新失敗: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('更新失敗，請重試');
+        });
+    }
+}
+</script>
+{% endblock %}

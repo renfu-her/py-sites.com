@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}編輯商品 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">編輯商品: {{ product.name }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">商品名稱 *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="price" class="form-label">基礎價格 *</label>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" value="{{ product.price }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="special_price" class="form-label">特價</label>
+                            <input type="number" class="form-control" id="special_price" name="special_price" step="0.01" min="0" value="{{ product.special_price }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="cold_price" class="form-label">冷飲價格</label>
+                            <input type="number" class="form-control" id="cold_price" name="cold_price" step="0.01" min="0" value="{{ product.cold_price }}">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="hot_price" class="form-label">熱飲價格</label>
+                            <input type="number" class="form-control" id="hot_price" name="hot_price" step="0.01" min="0" value="{{ product.hot_price }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">商品描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ product.description or '' }}</textarea>
+                    </div>
+                    
+                    <!-- 現有圖片 -->
+                    {% set active_images = product.images | selectattr('is_active') | list %}
+                    {% if active_images %}
+                    <div class="mb-3">
+                        <label class="form-label">現有圖片</label>
+                        <div class="row">
+                            {% for image in active_images %}
+                            <div class="col-md-3 mb-2">
+                                <div class="position-relative">
+                                    <img src="/static/uploads/{{ image.image }}" class="img-thumbnail" style="width: 100%; height: 100px; object-fit: cover;">
+                                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" 
+                                            onclick="removeImage({{ image.id }})" title="刪除圖片">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="images" class="form-label">添加新圖片</label>
+                        <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        <div class="form-text">可以選擇多張圖片</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {{ 'checked' if product.is_active }}>
+                            <label class="form-check-label" for="is_active">
+                                啟用商品
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('backend.products') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 保存修改
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function removeImage(imageId) {
+    if (confirm('確定要刪除這張圖片嗎？')) {
+        fetch('/api/admin/products/images/' + imageId + '/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('刪除失敗: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('刪除失敗，請重試');
+        });
+    }
+}
+</script>
+{% endblock %}

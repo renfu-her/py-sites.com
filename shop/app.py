@@ -1,16 +1,17 @@
-from flask import Flask, jsonify
+#!/usr/bin/env python3
+"""
+Quick Orders Flask Application
+Main entry point for the application
+"""
 
-def create_app():
-    app = Flask(__name__)
+from application import create_app
 
-    @app.get("/")
-    def index():
-        return f"shop.py-sites.com: Hello from Flask via Nginx + Gunicorn + Cloudflare (Full Strict)!"
-
-    @app.get("/healthz")
-    def healthz():
-        return jsonify(ok=True, app="shop.py-sites.com")
-
-    return app
-
-app = create_app()
+# if __name__ == '__main__':
+#     app = create_app()
+#     print("=" * 50)
+#     print("Quick Orders System Starting...")
+#     print("Access URL: http://localhost:5000")
+#     print("Admin Panel: http://localhost:5000/backend")
+#     print("Default Admin: admin@admin.com / admin123")
+#     print("=" * 50)
+#     app.run(debug=True, host='0.0.0.0', port=5000)

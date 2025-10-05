@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}註冊 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h4 class="mb-0">用戶註冊</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="registerForm">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">姓名 *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">電子信箱 *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">手機號</label>
+                        <input type="tel" class="form-control" id="phone" name="phone">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">密碼 *</label>
+                        <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                        <div class="form-text">密碼至少6位</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">確認密碼 *</label>
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> 註冊
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p class="mb-0">已有帳號？ 
+                        <a href="{{ url_for('frontend.login') }}" class="text-decoration-none">立即登入</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 返回首頁 -->
+        <div class="text-center mt-3">
+            <a href="{{ url_for('frontend.index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> 返回首頁
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm_password').value;
+    
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        alert('兩次輸入的密碼不一致');
+        return false;
+    }
+    
+    if (password.length < 6) {
+        e.preventDefault();
+        alert('密碼至少需要6位');
+        return false;
+    }
+});
+</script>
+{% endblock %}

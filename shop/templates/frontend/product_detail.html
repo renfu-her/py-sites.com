@@ -1,0 +1,308 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <!-- 產品圖片 -->
+        <div class="product-images">
+            {% set active_images = product.images | selectattr('is_active') | list %}
+            {% if active_images %}
+                <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        {% for image in active_images %}
+                        <div class="carousel-item {{ 'active' if loop.first else '' }}">
+                            <img src="/static/uploads/{{ image.image }}" class="d-block w-100" alt="{{ product.name }}" style="height: 400px; object-fit: cover;">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if active_images|length > 1 %}
+                    <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">上一張</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">下一張</span>
+                    </button>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center" style="height: 400px;">
+                    <i class="fas fa-image text-muted fa-5x"></i>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <!-- 產品資訊 -->
+        <div class="product-info">
+            <h1 class="product-title mb-3">{{ product.name }}</h1>
+            
+            {% if product.description %}
+            <p class="product-description text-muted mb-4">{{ product.description or '' }}</p>
+            {% endif %}
+            
+            <!-- 價格資訊 -->
+            <div class="price-info mb-4">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="h3 text-primary me-3" id="base-price-display">NTD{{ "%.0f"|format(product.price) }}</span>
+                    {% if product.special_price > 0 %}
+                    <span class="h5 text-success">特價: NTD{{ "%.0f"|format(product.special_price) }}</span>
+                    {% endif %}
+                </div>
+                <small class="text-muted">基礎價格（根據溫度選擇）</small>
+            </div>
+            
+            <!-- 配料選擇 -->
+            {% set active_ingredients = product.ingredients | selectattr('is_active') | list %}
+            {% if active_ingredients %}
+            <div class="ingredients mb-4">
+                <h5 class="mb-3">加料選擇 <small class="text-muted">(額外收費)</small></h5>
+                <div class="row">
+                    {% for ingredient in active_ingredients %}
+                    <div class="col-md-6 mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input ingredient-checkbox" type="checkbox" 
+                                   value="{{ ingredient.id }}" 
+                                   data-price="{{ ingredient.price }}"
+                                   id="ingredient_{{ ingredient.id }}">
+                            <label class="form-check-label" for="ingredient_{{ ingredient.id }}">
+                                {{ ingredient.name }}
+                                {% if ingredient.price > 0 %}
+                                <span class="text-success fw-bold">(+NTD{{ "%.0f"|format(ingredient.price) }})</span>
+                                {% else %}
+                                <span class="text-muted">(免費)</span>
+                                {% endif %}
+                            </label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 溫度選擇 -->
+            {% if product.cold_price > 0 or product.hot_price > 0 %}
+            <div class="temperature-selection mb-4">
+                <h5 class="mb-3">溫度選擇</h5>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="temperature" id="normal" value="normal" checked>
+                    <label class="btn btn-outline-secondary" for="normal">
+                        <i class="fas fa-thermometer-half me-1"></i>常溫 (NTD{{ "%.0f"|format(product.price) }})
+                    </label>
+                    
+                    {% if product.cold_price > 0 %}
+                    <input type="radio" class="btn-check" name="temperature" id="cold" value="cold">
+                    <label class="btn btn-outline-info" for="cold">
+                        <i class="fas fa-snowflake me-1"></i>冷飲 (NTD{{ "%.0f"|format(product.cold_price) }})
+                    </label>
+                    {% endif %}
+                    
+                    {% if product.hot_price > 0 %}
+                    <input type="radio" class="btn-check" name="temperature" id="hot" value="hot">
+                    <label class="btn btn-outline-danger" for="hot">
+                        <i class="fas fa-fire me-1"></i>熱飲 (NTD{{ "%.0f"|format(product.hot_price) }})
+                    </label>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- 數量選擇 -->
+            <div class="quantity-selection mb-4">
+                <h5 class="mb-3">數量</h5>
+                <div class="input-group" style="width: 150px;">
+                    <button class="btn btn-outline-secondary" type="button" onclick="changeQuantity(-1)">-</button>
+                    <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="10">
+                    <button class="btn btn-outline-secondary" type="button" onclick="changeQuantity(1)">+</button>
+                </div>
+            </div>
+            
+            <!-- 操作按鈕 -->
+            <div class="product-actions">
+                <button class="btn btn-primary btn-lg me-3" onclick="addToCartFromDetail({{ product.id }})">
+                    <i class="fas fa-cart-plus"></i> 加入購物車
+                </button>
+                <a href="{{ url_for('frontend.index') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-arrow-left"></i> 返回首頁
+                </a>
+            </div>
+            
+            <!-- 即時價格顯示 -->
+            <div class="total-price mt-4 p-3 bg-light rounded">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>基礎價格:</span>
+                            <span id="base-price-line">NTD{{ "%.0f"|format(product.price) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1" id="ingredient-price-line" style="display: none;">
+                            <span>加料費用:</span>
+                            <span id="ingredient-price-amount">NTD0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>數量:</span>
+                            <span id="quantity-display">1</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>總價:</strong>
+                            <strong class="text-primary" id="total-price">NTD{{ "%.0f"|format(product.price) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let basePrice = {{ product.price }};
+let specialPrice = {{ product.special_price }};
+let coldPrice = {{ product.cold_price }};
+let hotPrice = {{ product.hot_price }};
+
+function changeQuantity(delta) {
+    const quantityInput = document.getElementById('quantity');
+    let currentQuantity = parseInt(quantityInput.value);
+    let newQuantity = currentQuantity + delta;
+    
+    if (newQuantity >= 1 && newQuantity <= 10) {
+        quantityInput.value = newQuantity;
+        updateTotalPrice();
+    }
+}
+
+function updateTotalPrice() {
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const temperature = document.querySelector('input[name="temperature"]:checked').value;
+    
+    // 獲取基礎價格（根據溫度選擇）
+    let basePriceForTemp = basePrice;
+    if (temperature === 'cold' && coldPrice > 0) {
+        basePriceForTemp = coldPrice;
+    } else if (temperature === 'hot' && hotPrice > 0) {
+        basePriceForTemp = hotPrice;
+    } else if (specialPrice > 0) {
+        basePriceForTemp = specialPrice;
+    }
+    
+    // 更新基礎價格顯示
+    document.getElementById('base-price-display').textContent = 'NTD' + basePriceForTemp.toFixed(0);
+    document.getElementById('base-price-line').textContent = 'NTD' + basePriceForTemp.toFixed(0);
+    
+    // 計算配料價格（加料費用）
+    let ingredientPrice = 0;
+    document.querySelectorAll('.ingredient-checkbox:checked').forEach(checkbox => {
+        ingredientPrice += parseFloat(checkbox.dataset.price);
+    });
+    
+    // 更新加料費用顯示
+    const ingredientPriceLine = document.getElementById('ingredient-price-line');
+    const ingredientPriceAmount = document.getElementById('ingredient-price-amount');
+    
+    if (ingredientPrice > 0) {
+        ingredientPriceLine.style.display = 'flex';
+        ingredientPriceAmount.textContent = 'NTD' + ingredientPrice.toFixed(0);
+    } else {
+        ingredientPriceLine.style.display = 'none';
+    }
+    
+    // 更新數量顯示
+    document.getElementById('quantity-display').textContent = quantity;
+    
+    // 計算總價
+    const totalPrice = (basePriceForTemp + ingredientPrice) * quantity;
+    document.getElementById('total-price').textContent = 'NTD' + totalPrice.toFixed(0);
+}
+
+// 監聽溫度變化
+document.querySelectorAll('input[name="temperature"]').forEach(radio => {
+    radio.addEventListener('change', updateTotalPrice);
+});
+
+// 監聽配料變化
+document.querySelectorAll('.ingredient-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateTotalPrice);
+});
+
+// 監聽數量變化
+document.getElementById('quantity').addEventListener('input', updateTotalPrice);
+
+// 頁面載入時初始化價格顯示
+document.addEventListener('DOMContentLoaded', function() {
+    updateTotalPrice();
+});
+
+function addToCartFromDetail(productId) {
+    const quantity = parseInt(document.getElementById('quantity').value);
+    const temperature = document.querySelector('input[name="temperature"]:checked').value;
+    const selectedIngredients = [];
+    
+    document.querySelectorAll('.ingredient-checkbox:checked').forEach(checkbox => {
+        selectedIngredients.push(parseInt(checkbox.value));
+    });
+    
+    fetch('/api/cart/add', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: productId,
+            quantity: quantity,
+            temperature: temperature,
+            ingredient_ids: selectedIngredients
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // 顯示成功訊息
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // 3秒後自動移除
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+            
+            // 更新購物車數量
+            updateCartCount();
+        } else {
+            alert('加入失敗: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('加入失敗，請重試');
+    });
+}
+
+// 更新購物車數量
+function updateCartCount() {
+    fetch('/api/cart')
+        .then(response => response.json())
+        .then(data => {
+            const cartCountElement = document.getElementById('cart-count');
+            if (cartCountElement) {
+                cartCountElement.textContent = data.total_items;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

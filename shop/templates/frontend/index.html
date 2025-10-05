@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}首頁 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">歡迎來到 Quick Orders</h1>
+        <p class="lead">快速點餐，美味直達</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    {% for store in stores %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 store-card">
+            <!-- 店鋪圖片 -->
+            {% set store_images = store.images | selectattr('is_active') | sort(attribute='sort') | list %}
+            {% if store_images %}
+            <img src="/static/uploads/{{ store_images[0].image }}" 
+                 class="card-img-top" 
+                 alt="{{ store.name }}" 
+                 style="height: 250px; object-fit: cover;">
+            {% else %}
+            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+                <div class="text-center">
+                    <i class="fas fa-store fa-4x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">{{ store.name }}</p>
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="card-body">
+                <h5 class="card-title">{{ store.name }}</h5>
+                
+                {% if store.description %}
+                <p class="text-muted small mb-3">{{ store.description or '' }}</p>
+                {% endif %}
+                
+                <div class="text-muted small mb-3">
+                    {% if store.address %}
+                    <div class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ store.address }}</div>
+                    {% endif %}
+                    {% if store.phone %}
+                    <div class="mb-1"><i class="fas fa-phone me-2"></i>{{ store.phone }}</div>
+                    {% endif %}
+                    {% if store.work_time %}
+                    <div class="mb-1"><i class="fas fa-clock me-2"></i>{{ store.work_time }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- 商品數量 -->
+                {% set active_products = store.products | selectattr('is_active') | list %}
+                <div class="mb-3">
+                    <span class="badge bg-primary">
+                        <i class="fas fa-shopping-bag me-1"></i>
+                        {{ active_products|length }} 項商品
+                    </span>
+                </div>
+                
+                <a href="{{ url_for('frontend.store_detail', store_id=store.id) }}" class="btn btn-primary w-100">
+                    <i class="fas fa-store me-2"></i>進入店鋪
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not stores %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-store fa-3x text-muted mb-3"></i>
+        <h3 class="text-muted">暫無店鋪</h3>
+        <p class="text-muted">請稍後再來查看。</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.store-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.store-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

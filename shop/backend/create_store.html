@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}添加店鋪 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">添加店鋪</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">店鋪名稱 *</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ request.form.get('name', '') }}" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">關聯商品 * <small class="text-muted">(至少選擇一個)</small></label>
+                        {% if products %}
+                        <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                            {% for product in products %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="product_ids" value="{{ product.id }}" 
+                                       id="product_{{ product.id }}" 
+                                       {% if product.id|string in selected_product_ids %}checked{% endif %}>
+                                <label class="form-check-label" for="product_{{ product.id }}">
+                                    <span class="fw-semibold">{{ product.name }}</span>
+                                    {% if not product.is_active %}
+                                    <span class="badge bg-warning text-dark ms-2">已停用</span>
+                                    {% endif %}
+                                    <small class="text-muted d-block">價格: NTD{{ "%.0f"|format(product.price) }}</small>
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-text">請至少選擇一個商品</div>
+                        {% else %}
+                        <div class="alert alert-warning mb-0">
+                            尚無可用商品，請先建立商品後再新增店鋪。
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">店鋪描述</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ request.form.get('description', '') }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="address" class="form-label">地址</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ request.form.get('address', '') }}">
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">電話</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ request.form.get('phone', '') }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="work_time" class="form-label">營業時間</label>
+                        <input type="text" class="form-control" id="work_time" name="work_time" value="{{ request.form.get('work_time', '') }}" placeholder="例如: 9:00-21:00">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="images" class="form-label">店鋪 Banner 圖片 <small class="text-muted">(建議尺寸: 1200x600)</small></label>
+                        <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                        <div class="form-text">可以選擇多張圖片，將自動轉換為 WebP 格式並在前台輪播顯示</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if request.method != 'POST' or request.form.get('is_active') %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                啟用店鋪
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('backend.stores') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> 返回
+                        </a>
+                        <button type="submit" class="btn btn-primary" {% if not products %}disabled{% endif %}>
+                            <i class="fas fa-save"></i> 保存店鋪
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

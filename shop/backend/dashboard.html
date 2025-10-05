@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}管理後台 - Quick Orders{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">管理後台</h1>
+            <div>
+                <span class="text-muted me-3">歡迎，{{ current_user.name }}</span>
+                <a href="{{ url_for('backend.logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> 退出登錄
+                </a>
+            </div>
+        </div>
+        
+        <!-- 统计卡片 -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_products }}</h4>
+                                <p class="mb-0">商品總數</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-box fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_orders }}</h4>
+                                <p class="mb-0">訂單總數</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-shopping-cart fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ total_users }}</h4>
+                                <p class="mb-0">用戶總數</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4>{{ pending_orders }}</h4>
+                                <p class="mb-0">待處理訂單</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 最近訂單 -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">最近訂單</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>訂單號</th>
+                                        <th>客戶</th>
+                                        <th>金額</th>
+                                        <th>狀態</th>
+                                        <th>時間</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in recent_orders %}
+                                    <tr>
+                                        <td>{{ order.order_number }}</td>
+                                        <td>{{ order.customer_name }}</td>
+                                        <td>NTD{{ "%.0f"|format(order.total_amount) }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if order.status == 'pending' %}bg-warning
+                                                {% elif order.status == 'confirmed' %}bg-info
+                                                {% elif order.status == 'preparing' %}bg-primary
+                                                {% elif order.status == 'ready' %}bg-success
+                                                {% elif order.status == 'completed' %}bg-success
+                                                {% elif order.status == 'cancelled' %}bg-danger
+                                                {% endif %}">
+                                                {% if order.status == 'pending' %}待確認
+                                                {% elif order.status == 'confirmed' %}已確認
+                                                {% elif order.status == 'preparing' %}製作中
+                                                {% elif order.status == 'ready' %}待取餐
+                                                {% elif order.status == 'completed' %}已完成
+                                                {% elif order.status == 'cancelled' %}已取消
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ order.created_at.strftime('%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('backend.order_detail', order_id=order.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">查看</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">暫無訂單</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">快速操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('backend.products') }}" class="btn btn-primary">
+                                <i class="fas fa-box"></i> 商品管理
+                            </a>
+                            <a href="{{ url_for('backend.orders') }}" class="btn btn-success">
+                                <i class="fas fa-shopping-cart"></i> 訂單管理
+                            </a>
+                            <a href="{{ url_for('backend.users') }}" class="btn btn-info">
+                                <i class="fas fa-users"></i> 用戶管理
+                            </a>
+                            <a href="{{ url_for('backend.stores') }}" class="btn btn-warning">
+                                <i class="fas fa-store"></i> 店鋪管理
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
