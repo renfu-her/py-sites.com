@@ -16,12 +16,12 @@ class Config:
 class DevelopmentConfig(Config):
     """开发环境配置"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:@localhost/quick-orders'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://py-admin:py-password@localhost/shop'
 
 class ProductionConfig(Config):
     """生产环境配置"""
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://root:@localhost/quick-orders'
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'mysql+pymysql://py-admin:py-password@localhost/shop'
 
 class TestingConfig(Config):
     """测试环境配置"""
