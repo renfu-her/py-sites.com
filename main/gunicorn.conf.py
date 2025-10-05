@@ -1,0 +1,9 @@
+bind = "unix:/run/py-sites/gunicorn-main.sock"
+workers = 2
+threads = 2
+timeout = 60
+graceful_timeout = 30
+keepalive = 5
+accesslog = "-"
+errorlog = "-"
+loglevel = "info"

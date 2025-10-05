@@ -1,0 +1,19 @@
+[Unit]
+Description=Gunicorn - py-sites web-primary
+After=network.target
+
+[Service]
+User=renfu
+Group=www-data
+WorkingDirectory=/home/renfu/htdocs/py-sites/web_primary
+Environment="PATH=/home/renfu/htdocs/py-sites/web_primary/venv/bin"
+# 先確保 socket 存放目錄存在
+ExecStartPre=/bin/mkdir -p /run/py-sites
+ExecStartPre=/bin/chown renfu:www-data /run/py-sites
+ExecStart=/home/renfu/htdocs/py-sites/web_primary/venv/bin/gunicorn -c /home/renfu/htdocs/py-sites/web_primary/gunicorn.conf.py wsgi:app
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target
